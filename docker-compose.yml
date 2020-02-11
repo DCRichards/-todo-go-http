@@ -1,0 +1,22 @@
+version: "3.7"
+services:
+  server:
+    build: .
+    volumes:
+      - ./:/go/src/github.com/dcrichards/todo-go-http
+    env_file:
+      - .env
+    ports:
+      - "9011:${PORT}"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:12
+    env_file:
+      - .env
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+volumes:
+  pg-data:
