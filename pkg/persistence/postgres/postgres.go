@@ -3,7 +3,7 @@ package postgres
 import (
 	"errors"
 	"fmt"
-	"github.com/dcrichards/todo-go-http/pkg/todo"
+	todoService "github.com/dcrichards/todo-go-http/pkg/todo"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"
 )
@@ -11,7 +11,7 @@ import (
 type Todo struct {
 	ID        int64  `pg:",pk"`
 	Title     string `pg:",notnull"`
-	Completed bool   `pg:",notnull"`
+	Completed bool   `pg:",notnull,use_zero"`
 }
 
 type Postgres struct {
@@ -30,16 +30,16 @@ func (p *Postgres) Close() error {
 	return p.db.Close()
 }
 
-func (p *Postgres) GetAll() ([]todo.Todo, error) {
+func (p *Postgres) GetAll() ([]todoService.Todo, error) {
 	rows := []Todo{}
 	if err := p.db.Model(&rows).Select(); err != nil {
 		return nil, err
 	}
 
-	// Convert to todo.Todo
-	todos := []todo.Todo{}
+	// Convert to todoService.Todo
+	todos := []todoService.Todo{}
 	for _, r := range rows {
-		todos = append(todos, todo.Todo{
+		todos = append(todos, todoService.Todo{
 			ID:        r.ID,
 			Title:     r.Title,
 			Completed: r.Completed,
@@ -49,7 +49,7 @@ func (p *Postgres) GetAll() ([]todo.Todo, error) {
 	return todos, nil
 }
 
-func (p *Postgres) GetByID(id int64) (*todo.Todo, error) {
+func (p *Postgres) GetByID(id int64) (*todoService.Todo, error) {
 	t := &Todo{ID: id}
 	err := p.db.Select(t)
 	if err != nil {
@@ -66,19 +66,36 @@ func (p *Postgres) GetByID(id int64) (*todo.Todo, error) {
 	}
 
 	// We can cast here as the fields are the same.
-	return (*todo.Todo)(t), nil
+	return (*todoService.Todo)(t), nil
 }
 
-func (p *Postgres) Create(todo *todo.Todo) (*todo.Todo, error) {
-	return nil, nil
+func (p *Postgres) Create(todo *todoService.Todo) (*todoService.Todo, error) {
+	t := &Todo{
+		Title:     todo.Title,
+		Completed: todo.Completed,
+	}
+
+	_, err := p.db.Model(t).Insert()
+	if err != nil {
+		return nil, err
+	}
+
+	return (*todoService.Todo)(t), nil
 }
 
-func (p *Postgres) Update(todo *todo.Todo) error {
-	return nil
+func (p *Postgres) Update(todo *todoService.Todo) error {
+	t := &Todo{
+		ID:        todo.ID,
+		Title:     todo.Title,
+		Completed: todo.Completed,
+	}
+
+	return p.db.Update(t)
 }
 
 func (p *Postgres) Delete(id int64) error {
-	return nil
+	t := &Todo{ID: id}
+	return p.db.Delete(t)
 }
 
 func NewPostgres(params *ConnectionParams) (*Postgres, error) {
