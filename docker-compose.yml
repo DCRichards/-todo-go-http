@@ -6,6 +6,8 @@ services:
       - ./:/go/src/github.com/dcrichards/todo-go-http
     env_file:
       - .env
+    environment:
+      - CGO_ENABLED=0
     ports:
       - "9011:${PORT}"
     depends_on:
