@@ -67,7 +67,7 @@ func getLogger(level string, format string, logFile string) (*logger.Log, error)
 	if logFile != "" {
 		logFile, err := os.OpenFile(logFile, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		logOutput = logger.LogOutput(logger.OutputFile, logFile)
 	}
